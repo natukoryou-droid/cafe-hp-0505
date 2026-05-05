@@ -1,0 +1,216 @@
+:root {
+  color-scheme: light;
+  --bg: #FBF7F0;
+  --text: #222222;
+  --heading: #3A2A1A;
+  --accent: #D9C5A3;
+  --footer-bg: #3A2A1A;
+  --footer-text: #FBF7F0;
+}
+
+html, body {
+  background-color: #FBF7F0 !important;
+  color: #222222 !important;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* 講義用バナー */
+.workshop-banner {
+  background-color: var(--accent);
+  color: var(--heading);
+  text-align: center;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: bold;
+  border-bottom: 2px solid var(--heading);
+}
+
+/* ナビ */
+nav {
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--accent);
+  padding: 12px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: var(--heading);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* メインコンテンツ */
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 4rem;
+}
+
+/* ヒーロー */
+#top {
+  text-align: center;
+  padding: 4rem 0 2rem;
+  border-bottom: 2px solid var(--accent);
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: var(--heading);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.5rem;
+}
+
+.hero-tagline {
+  color: var(--heading);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+/* セクション共通 */
+section {
+  margin-top: 3rem;
+}
+
+h2 {
+  font-size: 1.6rem;
+  color: var(--heading);
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.08em;
+}
+
+/* テーブル */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--accent);
+  color: var(--text);
+}
+
+th {
+  color: var(--heading);
+  font-weight: bold;
+  background-color: var(--accent);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* メニューカテゴリ */
+.menu-category {
+  margin-bottom: 2rem;
+}
+
+.menu-category h3 {
+  font-size: 1.05rem;
+  color: var(--heading);
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+  padding-left: 8px;
+  border-left: 3px solid var(--heading);
+}
+
+/* 注記 */
+.note {
+  font-size: 13px;
+  color: var(--heading);
+  background-color: var(--accent);
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+/* リスト */
+ul.info-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+ul.info-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--accent);
+  color: var(--text);
+}
+
+ul.info-list li:last-child {
+  border-bottom: none;
+}
+
+/* お支払い */
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.payment-block h3 {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--heading);
+  margin-bottom: 0.4rem;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--accent);
+}
+
+.payment-block p {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+@media (max-width: 500px) {
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* フッター */
+footer {
+  background-color: var(--footer-bg);
+  color: var(--footer-text);
+  text-align: center;
+  padding: 2rem 24px;
+  margin-top: 4rem;
+  font-size: 13px;
+  line-height: 1.8;
+}
