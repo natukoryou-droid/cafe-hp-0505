@@ -1,0 +1,1032 @@
+<title>一杯の宇宙</title>
+<meta name="description" content="131,072粒の光が、宇宙から一杯のコーヒーになるまでを描くリアルタイム・モーショングラフィック。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..500&family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0806;
+  --cream:#F1E4CF;
+  --gold:#DDA85E;
+  --celadon:#93C9B7;
+  --dim:rgba(241,228,207,.58);
+  --line:rgba(241,228,207,.18);
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mincho:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --serif:"Fraunces",Georgia,serif;
+  --gutter:28px;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0;background:var(--ink);color:var(--cream);overflow:hidden}
+body{font-family:var(--serif);-webkit-font-smoothing:antialiased}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none;background:var(--ink)}
+.scrim{position:fixed;left:0;right:0;bottom:0;height:46vh;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(10,8,6,0),rgba(10,8,6,.72))}
+.top{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+  padding:calc(env(safe-area-inset-top,0px) + 22px) var(--gutter) 0;pointer-events:none}
+.brand .ja{font-family:var(--mincho);font-weight:500;font-size:15px;letter-spacing:.34em}
+.brand .en{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase}
+.tc{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums;text-transform:uppercase}
+.tc b{display:block;color:var(--cream);font-weight:500;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+.cap{position:fixed;left:var(--gutter);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);
+  max-width:min(660px,calc(100vw - 2*var(--gutter)));pointer-events:none;transition:opacity .45s,transform .45s,filter .45s}
+.cap.out{opacity:0;transform:translateY(-8px);filter:blur(6px)}
+.cap-meta{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;letter-spacing:.26em;color:var(--gold)}
+.cap-meta .rule{width:42px;height:1px;background:currentColor;opacity:.6}
+.cap h1{font-family:var(--mincho);font-weight:500;font-size:clamp(22px,3.1vw,44px);line-height:1.34;letter-spacing:.08em;
+  margin:14px 0 8px;text-wrap:balance}
+.cap .en{margin:0;font-style:italic;font-weight:300;font-size:clamp(14px,1.45vw,20px);color:var(--dim)}
+.cap .data{margin:16px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--celadon);font-variant-numeric:tabular-nums}
+.ph{display:inline-block;white-space:nowrap}
+.ch{display:inline-block;opacity:0;filter:blur(12px);transform:translateY(.4em);animation:chIn 1s cubic-bezier(.2,.75,.1,1) forwards}
+@keyframes chIn{to{opacity:1;filter:blur(0);transform:none}}
+.fade{opacity:0;animation:fadeIn 1.2s ease forwards}
+@keyframes fadeIn{to{opacity:1}}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:18px;
+  padding:0 var(--gutter) calc(env(safe-area-inset-bottom,0px) + 22px)}
+.btn{flex:none;appearance:none;background:none;border:1px solid var(--line);color:var(--cream);border-radius:0;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;padding:9px 12px;cursor:pointer;text-transform:uppercase;
+  transition:border-color .2s,color .2s}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn[aria-pressed="true"]{border-color:var(--celadon);color:var(--celadon)}
+.btn:focus-visible,.seg:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
+.segs{flex:1;display:flex;gap:6px;min-width:0}
+.seg{position:relative;flex:var(--w) 1 0;min-width:0;height:34px;background:none;border:0;padding:0;cursor:pointer;color:var(--dim)}
+.seg::before,.seg i{content:"";position:absolute;left:0;top:50%;height:1px;background:var(--line);width:100%}
+.seg i{background:var(--gold);width:var(--p,0%);box-shadow:0 0 8px var(--gold)}
+.seg span{position:absolute;left:0;top:calc(50% + 6px);font-family:var(--mono);font-size:9px;letter-spacing:.2em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:100%;transition:color .3s}
+.seg.on span{color:var(--cream)}
+.seg:hover span{color:var(--gold)}
+.hint{position:fixed;right:var(--gutter);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);font-family:var(--mono);font-size:9px;
+  letter-spacing:.2em;color:var(--dim);text-align:right;line-height:1.9;pointer-events:none;text-transform:uppercase}
+.nogl{position:fixed;inset:0;display:grid;place-items:center;padding:0 24px;text-align:center;font-family:var(--mincho);font-size:18px;line-height:1.8}
+@media (max-width:700px){
+  :root{--gutter:16px}
+  .seg span{display:none}
+  .hint{display:none}
+  .cap{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
+  .tc .sub{display:none}
+}
+</style>
+
+<canvas id="gl" aria-label="一杯の宇宙：光の粒子が宇宙、コーヒー豆、焙煎の炎、カップ、ラテアート、文字へと変化していくアニメーション"></canvas>
+<div class="scrim"></div>
+<header class="top">
+  <div class="brand"><div class="ja">一杯の宇宙</div><div class="en">A motion study for Cafe</div></div>
+  <div class="tc"><b id="tc">00:00:00</b><span id="pc"></span><span class="sub"> · WebGL2</span></div>
+</header>
+<section class="cap" id="cap" aria-live="polite">
+  <div class="cap-meta"><span id="capNo">00</span><span class="rule"></span><span id="capLabel">ORIGIN</span></div>
+  <h1 id="capJa">はじまりは、ひと粒の光。</h1>
+  <p class="en" id="capEn">It begins with a single point of light.</p>
+  <p class="data" id="capData">SINGULARITY · t = 0</p>
+</section>
+<div class="hint">Move to disturb the particles<br>Space pause · ← → chapters</div>
+<nav class="bar" aria-label="Playback">
+  <button class="btn" id="play" type="button">Pause</button>
+  <button class="btn" id="snd" type="button" aria-pressed="false">Sound off</button>
+  <div class="segs" id="segs"></div>
+</nav>
+
+<script>
+(() => {
+'use strict';
+
+/* ─────────────────────────  Timeline  ───────────────────────── */
+const TW = 512;
+const SMALL = Math.min(innerWidth, innerHeight) < 600;
+const TH = SMALL ? 128 : 256;
+const N = TW * TH;
+const NSHAPE = 8;
+const NSTR = N.toLocaleString('en-US');
+
+// shape ids: 0 singularity · 1 galaxy · 2 bean · 3 roast knot · 4 cup · 5 latte · 6 一杯 · 7 CAFE
+const SC = [
+  { t: 0,    shape: 0, dur: .01, turb: 0,   swirl: 0,    stag: .4, tint: [.020,.014,.010],
+    cam: { d: 5.0, yaw: 0,    pitch: 0,    roll: 0,    ty: 0,   drift: 0 },
+    label: 'ORIGIN', ja: 'はじまりは、ひと粒の光。', en: 'It begins with a single point of light.', data: 'SINGULARITY · t = 0' },
+  { t: 3.4,  shape: 1, dur: 2.6, turb: 1.3, swirl: 2.6,  stag: .25, ease: 1, flash: 1, shake: 1, tint: [.012,.022,.05],
+    cam: { d: 6.4, yaw: .2,   pitch: .62,  roll: -.18, ty: 0,   drift: .11 },
+    label: 'COSMOS', ja: '宇宙が、ひらく。', en: 'The universe unfolds.', data: NSTR + ' PARTICLES · 3 SPIRAL ARMS' },
+  { t: 10.5, shape: 2, dur: 3.0, turb: .9,  swirl: -1.8, stag: .5, tint: [.045,.022,.010],
+    cam: { d: 4.4, yaw: -.6,  pitch: .12,  roll: .05,  ty: 0,   drift: .16 },
+    label: 'SEED', ja: 'すべては、ひと粒の豆から。', en: 'Everything starts with a single bean.', data: 'COFFEA ARABICA · 1,800 M ALTITUDE' },
+  { t: 17,   shape: 3, dur: 2.3, turb: 1.6, swirl: 3,    stag: .45, flash: .55, shake: .5, tint: [.07,.018,.004],
+    cam: { d: 5.3, yaw: .3,   pitch: .25,  roll: .12,  ty: 0,   drift: .2 },
+    label: 'ROAST', ja: '炎が、香りを目覚めさせる。', en: 'Fire wakes the aroma.', data: '218 °C · 12 MIN 40 S · CITY ROAST' },
+  { t: 23.5, shape: 4, dur: 3.0, turb: .8,  swirl: -2,   stag: .5, tint: [.012,.032,.028],
+    cam: { d: 5.2, yaw: -.35, pitch: .34,  roll: 0,    ty: .25, drift: .08 },
+    label: 'BREW', ja: '湯気の向こうに、ひと息。', en: 'A pause beyond the steam.', data: '93 °C · RATIO 1:15 · 4 MIN' },
+  { t: 30.5, shape: 5, dur: 3.0, turb: .5,  swirl: 1.5,  stag: .5, tint: [.040,.022,.010],
+    cam: { d: 4.2, yaw: 0,    pitch: 1.48, roll: 0,    ty: .4,  drift: 0 },
+    label: 'POUR', ja: 'ミルクが描く、一瞬の模様。', en: 'Milk draws a fleeting pattern.', data: 'WAVE HEART · 3 RIPPLES · 62 °C' },
+  { t: 37.5, shape: 6, dur: 2.8, turb: 1.0, swirl: -2.2, stag: .55, tint: [.036,.026,.012],
+    cam: { d: 5.0, yaw: -.28, pitch: .05,  roll: 0,    ty: 0,   drift: .06 },
+    label: 'CUP', ja: '一杯の、物語。', en: 'One cup. One story.', data: 'FROM SEED TO CUP' },
+  { t: 44,   shape: 7, dur: 2.6, turb: 1.2, swirl: 2,    stag: .5, flash: .35, tint: [.008,.028,.024],
+    cam: { d: 5.6, yaw: .25,  pitch: .02,  roll: 0,    ty: 0,   drift: -.05 },
+    label: 'CAFE', ja: '火曜から日曜まで、あなたの一杯を。', en: 'Open Tuesday to Sunday. Closed Mondays.', data: 'TUE–THU 10–19 · FRI 10–20 · SAT 9–20 · SUN 9–18' },
+  { t: 51,   shape: 0, dur: 2.2, turb: .6,  swirl: 4,    stag: .35, tint: [.020,.014,.010],
+    cam: { d: 5.0, yaw: 0,    pitch: 0,    roll: 0,    ty: 0,   drift: 0 },
+    label: '', ja: '', en: '', data: '' },
+];
+const LOOP = 54;
+const CHAPTERS = 8;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ─────────────────────────  GL setup  ───────────────────────── */
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, depth: false, powerPreference: 'high-performance' });
+if (!gl) {
+  document.body.insertAdjacentHTML('beforeend', '<div class="nogl">このモーショングラフィックには WebGL2 が必要です。<br>最新の Chrome・Safari・Firefox でご覧ください。</div>');
+  return;
+}
+const HDR = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+
+function shader(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) + '\n' + src.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n'));
+  return s;
+}
+function program(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, shader(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name] = gl.getUniformLocation(p, info.name); }
+  return { p, u };
+}
+
+const NOISE = `
+vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float snoise(vec3 v){
+  const vec2 C=vec2(1.0/6.0,1.0/3.0); const vec4 D=vec4(0.0,0.5,1.0,2.0);
+  vec3 i=floor(v+dot(v,C.yyy)); vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz); vec3 l=1.0-g; vec3 i1=min(g.xyz,l.zxy); vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx; vec3 x2=x0-i2+C.yyy; vec3 x3=x0-D.yyy;
+  i=mod289(i);
+  vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+  float n_=0.142857142857; vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.0*floor(p*ns.z*ns.z); vec4 x_=floor(j*ns.z); vec4 y_=floor(j-7.0*x_);
+  vec4 x=x_*ns.x+ns.yyyy; vec4 y=y_*ns.x+ns.yyyy; vec4 h=1.0-abs(x)-abs(y);
+  vec4 b0=vec4(x.xy,y.xy); vec4 b1=vec4(x.zw,y.zw);
+  vec4 s0=floor(b0)*2.0+1.0; vec4 s1=floor(b1)*2.0+1.0; vec4 sh=-step(h,vec4(0.0));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy; vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x); vec3 p1=vec3(a0.zw,h.y); vec3 p2=vec3(a1.xy,h.z); vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x; p1*=norm.y; p2*=norm.z; p3*=norm.w;
+  vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0); m=m*m;
+  return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+}
+float hashu(uint x){ x^=x>>16; x*=0x7feb352dU; x^=x>>15; x*=0x846ca68bU; x^=x>>16; return float(x)/4294967295.0; }
+mat2 rot(float a){ float c=cos(a), s=sin(a); return mat2(c,s,-s,c); }
+`;
+
+const PARTICLE_VS = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uPos, uCol;
+uniform int uFrom, uTo, uTW, uTH;
+uniform float uP, uStag, uTurb, uSwirl, uTime, uPx, uScale, uEase, uIntensity, uAspect;
+uniform mat4 uProj, uView;
+uniform vec3 uMouse;
+out vec3 vCol;
+${NOISE}
+vec3 anim(vec3 p, float flag, float r, float t, inout float b){
+  if (flag > 0.5 && flag < 1.5) {            // steam: rise, sway, fade
+    float h = fract((p.y - 0.5) / 1.5 + t * 0.09);
+    p.y = 0.5 + h * 1.5;
+    p.x += sin(h * 6.0 + t * 1.1 + r * 6.2831) * 0.13 * h + snoise(vec3(p.x * 2.0, h * 3.0 - t * 0.5, r * 9.0)) * 0.09 * h;
+    p.z += cos(h * 5.0 + t * 0.9 + r * 3.0) * 0.09 * h;
+    b *= smoothstep(0.0, 0.18, h) * (1.0 - h);
+  } else if (flag > 1.5 && flag < 2.5) {     // galaxy: differential rotation
+    float rad = length(p.xz);
+    p.xz = rot(t * 0.35 / (0.35 + rad)) * p.xz;
+  } else if (flag > 2.5 && flag < 3.5) {     // liquid surface: slow swirl
+    p.xz = rot(-t * 0.06) * p.xz;
+  } else if (flag > 4.5) {                   // embers: drift up and die
+    float h = fract(r * 7.0 + t * 0.25);
+    p.y += h * 0.7;
+    p.xz += 0.06 * vec2(snoise(p * 3.0 + t), snoise(p * 3.0 + t + 7.0));
+    b *= (1.0 - h) * (0.6 + 0.4 * sin(t * 20.0 + r * 50.0));
+  }
+  return p;
+}
+void main(){
+  int id = gl_VertexID;
+  ivec2 c = ivec2(id % uTW, id / uTW);
+  vec4 pa = texelFetch(uPos, c + ivec2(0, uFrom * uTH), 0);
+  vec4 pb = texelFetch(uPos, c + ivec2(0, uTo * uTH), 0);
+  vec4 ca = texelFetch(uCol, c + ivec2(0, uFrom * uTH), 0);
+  vec4 cb = texelFetch(uCol, c + ivec2(0, uTo * uTH), 0);
+  float r  = hashu(uint(id) * 747796405u + 2891336453u);
+  float r2 = hashu(uint(id) * 2654435761u + 1013904223u);
+  float ba = 1.0, bb = 1.0;
+  vec3 A = anim(pa.xyz, ca.a, r, uTime, ba);
+  vec3 B = anim(pb.xyz, cb.a, r, uTime, bb);
+  float p = clamp(uP * (1.0 + uStag) - r * uStag, 0.0, 1.0);
+  float e = uEase < 0.5 ? p * p * p * (p * (p * 6.0 - 15.0) + 10.0) : (p >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * p));
+  vec3 pos = mix(A, B, e);
+  float arc = sin(3.14159265 * p);
+  vec3 q = pos * 0.9 + vec3(0.0, uTime * 0.15, 0.0);
+  vec3 nz = vec3(snoise(q), snoise(q + vec3(31.3, 0.0, 0.0)), snoise(q + vec3(-17.1, 0.0, 9.2)));
+  pos += nz * (0.012 + uTurb * arc * 0.75);
+  pos.xz = rot(uSwirl * arc * (0.4 + r)) * pos.xz;
+  pos *= uScale;
+  vec4 vp = uView * vec4(pos, 1.0);
+  vec4 cp = uProj * vp;
+  if (cp.w > 0.0 && uMouse.z > 0.001) {
+    vec2 ndc = cp.xy / cp.w;
+    vec2 dm = (ndc - uMouse.xy) * vec2(uAspect, 1.0);
+    float dl = length(dm);
+    float push = uMouse.z * 0.22 * exp(-dl * dl * 14.0);
+    ndc += (dm / max(dl, 1e-4)) / vec2(uAspect, 1.0) * push;
+    cp.xy = ndc * cp.w;
+  }
+  gl_Position = cp;
+  float size = mix(pa.w, pb.w, e) * (0.7 + 1.1 * pow(r2, 5.0));
+  float px = size * uPx * 14.0 / max(-vp.z, 0.15);
+  gl_PointSize = clamp(px, 1.0, 64.0);
+  float tw = 0.8 + 0.2 * sin(uTime * (2.0 + r * 3.0) + r * 40.0);
+  vec3 col = mix(ca.rgb * ba, cb.rgb * bb, e);
+  col += arc * uTurb * 0.35 * vec3(1.0, 0.55, 0.25);
+  vCol = col * tw * uIntensity * min(1.0, px * px);
+}`;
+const PARTICLE_FS = `#version 300 es
+precision highp float;
+in vec3 vCol; out vec4 o;
+void main(){
+  vec2 d = gl_PointCoord * 2.0 - 1.0;
+  float r2 = dot(d, d);
+  if (r2 > 1.0) discard;
+  o = vec4(vCol * exp(-r2 * 4.5), 1.0);
+}`;
+
+const DUST_VS = `#version 300 es
+precision highp float;
+uniform mat4 uProj, uView; uniform float uTime, uPx; uniform vec3 uTint;
+out vec3 vCol;
+${NOISE}
+void main(){
+  uint id = uint(gl_VertexID);
+  vec3 h = vec3(hashu(id * 3u + 1u), hashu(id * 3u + 2u), hashu(id * 3u + 3u));
+  vec3 p = (h - 0.5) * vec3(16.0, 10.0, 12.0);
+  p.y = mod(p.y + uTime * 0.06 * (0.4 + h.x) + 5.0, 10.0) - 5.0;
+  p.x += sin(uTime * 0.2 + h.y * 6.28) * 0.25;
+  vec4 vp = uView * vec4(p, 1.0);
+  gl_Position = uProj * vp;
+  float px = (1.0 + h.z * 2.5) * uPx * 14.0 / max(-vp.z, 0.3);
+  gl_PointSize = clamp(px, 1.0, 40.0);
+  vCol = (uTint * 9.0 + 0.03) * (0.4 + 0.6 * sin(uTime * (0.5 + h.x) + h.z * 30.0) * 0.5 + 0.3) * min(1.0, px * px);
+}`;
+
+const FULL_VS = `#version 300 es
+out vec2 vUv;
+void main(){ vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); vUv = p; gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+
+const BG_FS = `#version 300 es
+precision highp float;
+uniform vec3 uTint; uniform float uTime; uniform vec2 uRes;
+in vec2 vUv; out vec4 o;
+float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h21(i), h21(i + vec2(1, 0)), u.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), u.x), u.y); }
+float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * vn(p); p = p * 2.03 + 11.7; a *= 0.5; } return s; }
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  vec2 q = vec2(fbm(uv * 1.4 + uTime * 0.02), fbm(uv * 1.4 + vec2(5.2, 1.3) - uTime * 0.015));
+  float f = fbm(uv * 1.8 + q * 1.7 + uTime * 0.01);
+  vec3 col = uTint * (0.2 + 2.4 * f * f);
+  col += uTint * 1.6 * exp(-dot(uv, uv) * 2.2);
+  o = vec4(col, 1.0);
+}`;
+
+const BRIGHT_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uSrc; uniform vec2 uTexel; uniform float uThr;
+in vec2 vUv; out vec4 o;
+void main(){
+  vec3 c = (texture(uSrc, vUv + uTexel * vec2(-1, -1)).rgb + texture(uSrc, vUv + uTexel * vec2(1, -1)).rgb
+          + texture(uSrc, vUv + uTexel * vec2(-1, 1)).rgb + texture(uSrc, vUv + uTexel * vec2(1, 1)).rgb) * 0.25;
+  c = min(c, vec3(24.0));
+  float l = max(c.r, max(c.g, c.b));
+  o = vec4(c * smoothstep(uThr, uThr + 0.7, l), 1.0);
+}`;
+
+const BLUR_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uSrc; uniform vec2 uDir;
+in vec2 vUv; out vec4 o;
+void main(){
+  vec2 o1 = uDir * 1.3846153846, o2 = uDir * 3.2307692308;
+  vec3 c = texture(uSrc, vUv).rgb * 0.2270270270
+         + (texture(uSrc, vUv + o1).rgb + texture(uSrc, vUv - o1).rgb) * 0.3162162162
+         + (texture(uSrc, vUv + o2).rgb + texture(uSrc, vUv - o2).rgb) * 0.0702702703;
+  o = vec4(c, 1.0);
+}`;
+
+const COMP_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uScene, uB1, uB2, uB3, uS;
+uniform float uBloom, uStreak, uFlash, uTime, uExposure, uShock;
+uniform vec2 uRes;
+in vec2 vUv; out vec4 o;
+float h12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+void main(){
+  vec2 asp = vec2(uRes.x / uRes.y, 1.0);
+  vec2 uv = vUv;
+  vec2 d = uv - 0.5;
+  float ring = 0.0;
+  if (uShock > 0.0 && uShock < 1.6) {
+    float dist = length(d * asp);
+    float rr = uShock * 1.25;
+    float w = exp(-pow((dist - rr) * 10.0, 2.0)) * (1.0 - uShock / 1.6);
+    uv -= normalize(d * asp + 1e-5) / asp * w * 0.035;
+    ring = w;
+  }
+  d = uv - 0.5;
+  float ab = 0.018 * dot(d * asp, d * asp) + uFlash * 0.012 + ring * 0.02;
+  vec3 col = min(vec3(texture(uScene, uv - d * ab).r, texture(uScene, uv).g, texture(uScene, uv + d * ab).b), vec3(64.0));
+  vec3 bl = texture(uB1, uv).rgb * 0.55 + texture(uB2, uv).rgb * 0.8 + texture(uB3, uv).rgb * 1.15;
+  col += bl * uBloom;
+  col += texture(uS, uv).rgb * vec3(1.0, 0.76, 0.52) * uStreak;
+  col += ring * vec3(1.0, 0.85, 0.65) * 0.25;
+  col += uFlash * vec3(1.0, 0.92, 0.82) * 1.6;
+  col = 1.0 - exp(-col * uExposure);
+  col = mix(col, col * col * (3.0 - 2.0 * col), 0.35);
+  float v = smoothstep(1.15, 0.25, length(d * asp));
+  col *= mix(0.5, 1.0, v);
+  col += (h12(gl_FragCoord.xy + fract(uTime * 7.13) * 317.0) - 0.5) * 0.035;
+  o = vec4(max(col, 0.0), 1.0);
+}`;
+
+const P_PART = program(PARTICLE_VS, PARTICLE_FS);
+const P_DUST = program(DUST_VS, PARTICLE_FS);
+const P_BG = program(FULL_VS, BG_FS);
+const P_BRIGHT = program(FULL_VS, BRIGHT_FS);
+const P_BLUR = program(FULL_VS, BLUR_FS);
+const P_COMP = program(FULL_VS, COMP_FS);
+const VAO = gl.createVertexArray();
+gl.bindVertexArray(VAO);
+
+/* ─────────────────────────  Shapes  ───────────────────────── */
+const POS = new Float32Array(N * NSHAPE * 4);
+const COL = new Float32Array(N * NSHAPE * 4);
+let seed = 20260928;
+function rnd() { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+function gauss() { let u = 0; while (u === 0) u = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd()); }
+function dir() { const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u); return [s * Math.cos(th), u, s * Math.sin(th)]; }
+const mix = (a, b, t) => a + (b - a) * t;
+const mix3 = (a, b, t) => [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)];
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+function put(k, i, x, y, z, s, c, m, flag) {
+  const o = (k * N + i) * 4;
+  POS[o] = x; POS[o + 1] = y; POS[o + 2] = z; POS[o + 3] = s;
+  COL[o] = c[0] * m; COL[o + 1] = c[1] * m; COL[o + 2] = c[2] * m; COL[o + 3] = flag;
+}
+
+function shapeSingularity(k) {
+  for (let i = 0; i < N; i++) {
+    const d = dir();
+    if (rnd() < 0.82) {
+      const r = Math.abs(gauss()) * 0.035;
+      put(k, i, d[0] * r, d[1] * r, d[2] * r, 0.8, [1, 0.9, 0.76], 1, 0);
+    } else {
+      const r = 0.06 + Math.pow(rnd(), 2.2) * 0.55;
+      put(k, i, d[0] * r, d[1] * r * 0.5, d[2] * r, 0.6, [1, 0.66, 0.36], 0.35, 0);
+    }
+  }
+}
+
+function shapeGalaxy(k) {
+  const core = [1, 0.74, 0.44], arm = [0.38, 0.72, 0.84];
+  for (let i = 0; i < N; i++) {
+    if (rnd() < 0.14) {
+      const d = dir(), r = Math.abs(gauss()) * 0.24;
+      put(k, i, d[0] * r, d[1] * r * 0.55, d[2] * r, 0.9, [1, 0.8, 0.55], 1.25, 2);
+      continue;
+    }
+    const a = i % 3;
+    let r = 0.14 + Math.pow(rnd(), 1.15) * 2.35;
+    const ang = a * Math.PI * 2 / 3 + r * 1.95 + gauss() * 0.26 * (0.45 + r * 0.22);
+    r += gauss() * 0.06;
+    const y = gauss() * 0.05 * (1.35 - r / 2.6);
+    const t = clamp(r / 2.4, 0, 1);
+    let c = mix3(core, arm, Math.pow(t, 0.7)), m = 0.9 - t * 0.35, s = 0.85;
+    const q = rnd();
+    if (q < 0.05) { c = [1, 0.92, 0.95]; m = 1.8; s = 1.7; }
+    else if (q < 0.2) { m *= 0.3; }
+    put(k, i, Math.cos(ang) * r, y, Math.sin(ang) * r, s, c, m, 2);
+  }
+}
+
+function shapeBean(k) {
+  const tilt = 0.38, ct = Math.cos(tilt), st = Math.sin(tilt);
+  for (let i = 0; i < N; i++) {
+    const d = dir();
+    if (rnd() < 0.05) {
+      const r = 1.4 + rnd() * 1.4;
+      put(k, i, d[0] * r, d[1] * r, d[2] * r, 0.5, [1, 0.72, 0.4], 0.25, 0);
+      continue;
+    }
+    let x = d[0] * 0.78, y = d[1] * 1.12, z = d[2] * 0.55;
+    const front = z > 0;
+    if (front) z *= 0.45;
+    const xc = 0.1 * Math.sin(y * 2.6);
+    const dx = x - xc;
+    const w = front ? Math.exp(-(dx * dx) / (2 * 0.045 * 0.045)) * (1 - Math.pow(Math.abs(y) / 1.12, 4)) : 0;
+    z -= 0.17 * w;
+    const shade = 0.55 + 0.45 * Math.max(0, d[0] * -0.5 + d[1] * 0.5 + d[2] * 0.7);
+    let c = front ? [0.98, 0.56, 0.24] : [0.86, 0.42, 0.16];
+    c = mix3(c, [1, 0.88, 0.6], w);
+    const X = x * ct - y * st, Y = x * st + y * ct;
+    put(k, i, X, Y, z, 0.9, c, (0.62 + w * 1.1) * shade, 0);
+  }
+}
+
+function knotPt(u) {
+  const r = 1 + 0.42 * Math.cos(5 * u);
+  return [r * Math.cos(2 * u) * 1.12, r * Math.sin(2 * u) * 1.12, -Math.sin(5 * u) * 0.47];
+}
+function shapeKnot(k) {
+  for (let i = 0; i < N; i++) {
+    const u = rnd() * Math.PI * 2;
+    const c = knotPt(u), c2 = knotPt(u + 0.001);
+    let T = [c2[0] - c[0], c2[1] - c[1], c2[2] - c[2]];
+    let l = Math.hypot(...T); T = T.map(v => v / l);
+    let Nn = [T[1], -T[0], 0]; l = Math.hypot(...Nn) || 1; Nn = Nn.map(v => v / l);
+    const B = [T[1] * Nn[2] - T[2] * Nn[1], T[2] * Nn[0] - T[0] * Nn[2], T[0] * Nn[1] - T[1] * Nn[0]];
+    const v = rnd() * Math.PI * 2;
+    const ember = rnd() < 0.1;
+    const rad = ember ? 0.2 + rnd() * 0.45 : 0.17 * (rnd() < 0.75 ? 1 : Math.sqrt(rnd()));
+    const cv = Math.cos(v), sv = Math.sin(v);
+    const x = c[0] + rad * (cv * Nn[0] + sv * B[0]);
+    const y = c[1] + rad * (cv * Nn[1] + sv * B[1]);
+    const z = c[2] + rad * (cv * Nn[2] + sv * B[2]);
+    if (ember) { put(k, i, x, y, z, 0.7, [1, 0.36, 0.08], 0.7, 5); continue; }
+    const heat = 0.5 + 0.5 * Math.sin(u * 10 + v * 0.5);
+    const c3 = mix3([1, 0.24, 0.03], [1, 0.8, 0.4], heat);
+    put(k, i, x, y, z, 0.85, c3, 0.5 + 0.55 * Math.max(0, sv), 0);
+  }
+}
+
+function cupR(y) { const t = clamp((y + 0.62) / 1.08, 0, 1); return 0.46 + 0.2 * Math.pow(t, 1.4) + 0.03 * Math.sin(t * Math.PI); }
+function shapeCup(k) {
+  const cera = [0.9, 0.93, 0.96], cela = [0.6, 0.84, 0.76];
+  for (let i = 0; i < N; i++) {
+    const a = rnd(), th = rnd() * Math.PI * 2;
+    const light = 0.45 + 0.55 * Math.max(0, Math.cos(th - 2.3));
+    if (a < 0.36) {
+      const y = -0.62 + rnd() * 1.08, R = cupR(y);
+      put(k, i, Math.cos(th) * R, y, Math.sin(th) * R, 0.85, cera, 0.62 * light, 0);
+    } else if (a < 0.44) {
+      const y = -0.5 + rnd() * 0.96, R = cupR(y) * 0.93;
+      put(k, i, Math.cos(th) * R, y, Math.sin(th) * R, 0.75, cera, 0.28, 0);
+    } else if (a < 0.48) {
+      const R = cupR(0.46) + gauss() * 0.008;
+      put(k, i, Math.cos(th) * R, 0.46 + gauss() * 0.006, Math.sin(th) * R, 0.9, [1, 0.97, 0.92], 1.1, 0);
+    } else if (a < 0.54) {
+      const phi = (rnd() * 2 - 1) * 2.3, v = rnd() * Math.PI * 2;
+      const cx = 0.72, cy = -0.08, maj = 0.24, mn = 0.05;
+      const nx = Math.cos(phi), ny = Math.sin(phi);
+      put(k, i, cx + maj * nx + mn * Math.cos(v) * nx, cy + maj * ny + mn * Math.cos(v) * ny, mn * Math.sin(v), 0.85, cera, 0.65, 0);
+    } else if (a < 0.74) {
+      const rho = Math.sqrt(rnd()) * 1.28;
+      const edge = Math.exp(-Math.pow((rho - 1.22) * 18, 2));
+      put(k, i, Math.cos(th) * rho, -0.66 + 0.1 * Math.pow(rho / 1.28, 3), Math.sin(th) * rho, 0.8, cela, (0.32 + 0.9 * edge) * light, 0);
+    } else if (a < 0.86) {
+      const Rc = cupR(0.4) * 0.92, rho = Math.sqrt(rnd()) * Rc;
+      const crema = Math.pow(rho / Rc, 6);
+      put(k, i, Math.cos(th) * rho, 0.4, Math.sin(th) * rho, 0.85, mix3([0.5, 0.22, 0.07], [0.95, 0.62, 0.3], crema), 0.55 + crema * 0.5, 3);
+    } else {
+      const rib = i % 3, h = rnd();
+      put(k, i, (rib - 1) * 0.2 + gauss() * 0.03, 0.5 + h * 1.5, gauss() * 0.05, 1.4, [1, 0.95, 0.9], 0.42, 1);
+    }
+  }
+}
+
+function heart(x, y, cx, cy, s) {
+  const px = (x - cx) / s, py = (y - cy) / s;
+  const q = px * px + py * py - 1;
+  return q * q * q - px * px * py * py * py <= 0;
+}
+function waveHeart(X, Y) {
+  // one big heart, three thin crema ripples pushed toward the top, and a pull-through line
+  const cy = 0.04, s = 0.56;
+  if (!heart(X, Y, 0, cy, s)) return Math.abs(X) < 0.02 && Y > -0.95 && Y < cy - s * 0.9;
+  for (const k of [0.8, 0.6, 0.4]) {
+    const ky = cy + (1 - k) * s * 0.42, ks = s * k;
+    if (heart(X, Y, 0, ky, ks * 1.07) && !heart(X, Y, 0, ky, ks)) return false;
+  }
+  return !(Math.abs(X) < 0.014 && Y > cy - s * 0.95 && Y < cy + s * 0.55);
+}
+function shapeLatte(k) {
+  const RAD = 1.55, LA = 0.06 * 34, LC = Math.cos(LA), LS = Math.sin(LA);
+  for (let i = 0; i < N; i++) {
+    let u, v, rho, milk, tries = 0;
+    do {
+      rho = Math.sqrt(rnd()) * RAD; const th = rnd() * Math.PI * 2;
+      u = Math.cos(th) * rho; v = Math.sin(th) * rho;
+      const X = u / RAD, Y = v / RAD + 0.02 * Math.sin(u / RAD * 5);
+      milk = waveHeart(X * 1.08, Y * 1.08);
+    } while (!milk && rnd() < 0.5 && ++tries < 4);
+    const rim = rho > RAD * 0.9;
+    let c, m, s;
+    if (rim) { c = [0.92, 0.6, 0.28]; m = 0.55 + Math.pow((rho / RAD - 0.9) * 10, 2) * 0.5; s = 0.9; }
+    else if (milk) { c = [1, 0.95, 0.86]; m = 1.0; s = 1.1; }
+    else { c = [0.6, 0.29, 0.1]; m = 0.5; s = 0.85; }
+    // pre-rotate so the heart reads upright mid-scene (shader spins liquid by -0.06·t)
+    const x = u * LC - (-v) * LS, z = u * LS + (-v) * LC;
+    put(k, i, x, 0.4 + gauss() * 0.004, z, s, c, m, 3);
+  }
+}
+
+function shapeText(k, text, opt) {
+  const W = 1400, H = 600;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d', { willReadFrequently: true });
+  x.fillStyle = '#fff'; x.textBaseline = 'middle'; x.font = opt.font;
+  const chars = [...text];
+  const widths = chars.map(ch => x.measureText(ch).width);
+  const total = widths.reduce((a, b) => a + b, 0) + (opt.spacing || 0) * (chars.length - 1);
+  let cx = (W - total) / 2;
+  chars.forEach((ch, j) => { x.fillText(ch, cx, H / 2); cx += widths[j] + (opt.spacing || 0); });
+  const data = x.getImageData(0, 0, W, H).data;
+  const A = (px, py) => (px < 0 || py < 0 || px >= W || py >= H) ? 0 : data[(py * W + px) * 4 + 3];
+  const pts = [], edge = [];
+  let minX = W, maxX = 0, minY = H, maxY = 0;
+  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+    if (A(px, py) > 128) {
+      pts.push(px, py);
+      edge.push(A(px + 3, py) < 128 || A(px - 3, py) < 128 || A(px, py + 3) < 128 || A(px, py - 3) < 128 ? 1 : 0);
+      if (px < minX) minX = px; if (px > maxX) maxX = px; if (py < minY) minY = py; if (py > maxY) maxY = py;
+    }
+  }
+  const n = edge.length;
+  if (!n) return false;
+  let sc = opt.width / (maxX - minX);
+  if ((maxY - minY) * sc > opt.maxH) sc = opt.maxH / (maxY - minY);
+  const mx = (minX + maxX) / 2, my = (minY + maxY) / 2;
+  for (let i = 0; i < N; i++) {
+    const j = Math.floor(rnd() * n);
+    const X = (pts[2 * j] + rnd() - mx) * sc, Y = -(pts[2 * j + 1] + rnd() - my) * sc;
+    const e = edge[j];
+    const vy = clamp(Y / ((maxY - minY) * sc) + 0.5, 0, 1);
+    const [c, m] = opt.color(vy, e);
+    put(k, i, X, Y, gauss() * 0.035 + (e ? 0 : gauss() * 0.02), e ? 1.05 : 0.8, c, m, 0);
+  }
+  return true;
+}
+
+function buildBaseShapes() {
+  shapeSingularity(0); shapeGalaxy(1); shapeBean(2); shapeKnot(3); shapeCup(4); shapeLatte(5);
+  // placeholders until fonts are in: copy galaxy
+  for (const k of [6, 7]) { POS.copyWithin(k * N * 4, N * 4, 2 * N * 4); COL.copyWithin(k * N * 4, N * 4, 2 * N * 4); }
+}
+function buildTextShapes() {
+  shapeText(6, '一杯', { font: '800 360px "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif', width: 3.3, maxH: 1.9,
+    color: (v, e) => [mix3([0.95, 0.46, 0.18], [1, 0.87, 0.62], v), e ? 1.3 : 0.52] });
+  shapeText(7, 'CAFE', { font: '400 330px "Fraunces", Georgia, serif', spacing: 60, width: 3.6, maxH: 1.5,
+    color: (v, e) => e ? [[0.58, 0.95, 0.84], 1.2] : [[0.98, 0.9, 0.78], 0.5] });
+}
+
+function tex(data) {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, TW, TH * NSHAPE, 0, gl.RGBA, gl.FLOAT, data);
+  return t;
+}
+buildBaseShapes();
+const TEX_POS = tex(POS), TEX_COL = tex(COL);
+
+const fontsReady = Promise.race([
+  Promise.all([
+    document.fonts.load('800 360px "Shippori Mincho"', '一杯'),
+    document.fonts.load('400 330px "Fraunces"', 'CAFE'),
+  ]),
+  new Promise(r => setTimeout(r, 4000)),
+]).catch(() => {});
+fontsReady.then(() => {
+  buildTextShapes();
+  const off = 6 * N * 4, len = 2 * N * 4;
+  gl.bindTexture(gl.TEXTURE_2D, TEX_POS);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 6 * TH, TW, 2 * TH, gl.RGBA, gl.FLOAT, POS.subarray(off, off + len));
+  gl.bindTexture(gl.TEXTURE_2D, TEX_COL);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 6 * TH, TW, 2 * TH, gl.RGBA, gl.FLOAT, COL.subarray(off, off + len));
+});
+
+/* ─────────────────────────  Render targets  ───────────────────────── */
+let fmt = HDR ? { i: gl.RGBA16F, t: gl.HALF_FLOAT } : { i: gl.RGBA8, t: gl.UNSIGNED_BYTE };
+function target(w, h) {
+  w = Math.max(1, w | 0); h = Math.max(1, h | 0);
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, fmt.i, w, h, 0, gl.RGBA, fmt.t, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE && fmt.i !== gl.RGBA8) {
+    fmt = { i: gl.RGBA8, t: gl.UNSIGNED_BYTE };
+    gl.deleteFramebuffer(fb); gl.deleteTexture(t);
+    return target(w, h);
+  }
+  return { t, fb, w, h };
+}
+let RT = null;
+function freeRT() {
+  if (!RT) return;
+  for (const k in RT) { gl.deleteTexture(RT[k].t); gl.deleteFramebuffer(RT[k].fb); }
+}
+function resize() {
+  const dpr = Math.min(devicePixelRatio || 1, SMALL ? 1.75 : 2);
+  const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+  if (canvas.width === w && canvas.height === h && RT) return;
+  canvas.width = w; canvas.height = h;
+  freeRT();
+  RT = {
+    scene: target(w, h),
+    half: target(w / 2, h / 2),
+    a1: target(w / 4, h / 4), b1: target(w / 4, h / 4),
+    a2: target(w / 8, h / 8), b2: target(w / 8, h / 8),
+    a3: target(w / 16, h / 16), b3: target(w / 16, h / 16),
+    sa: target(w / 8, h / 8), sb: target(w / 8, h / 8),
+  };
+}
+addEventListener('resize', resize);
+resize();
+
+/* ─────────────────────────  Math  ───────────────────────── */
+function perspective(fovy, aspect, near, far) {
+  const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+  return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+}
+function lookAt(e, c, roll) {
+  let zx = e[0] - c[0], zy = e[1] - c[1], zz = e[2] - c[2];
+  let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+  let xx = zz, xy = 0, xz = -zx; // cross((0,1,0), z)
+  l = Math.hypot(xx, xy, xz) || 1; xx /= l; xy /= l; xz /= l;
+  let yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  const cr = Math.cos(roll), sr = Math.sin(roll);
+  const rx = [xx * cr + yx * sr, xy * cr + yy * sr, xz * cr + yz * sr];
+  const ry = [yx * cr - xx * sr, yy * cr - xy * sr, yz * cr - xz * sr];
+  [xx, xy, xz] = rx; [yx, yy, yz] = ry;
+  return new Float32Array([
+    xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0,
+    -(xx * e[0] + xy * e[1] + xz * e[2]), -(yx * e[0] + yy * e[1] + yz * e[2]), -(zx * e[0] + zy * e[1] + zz * e[2]), 1,
+  ]);
+}
+const smooth = t => t * t * (3 - 2 * t);
+const easeIO = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function sceneAt(t) { let s = 0; for (let i = 0; i < SC.length; i++) if (SC[i].t <= t) s = i; return s; }
+function camOf(s, t) { const c = SC[s].cam, dt = t - SC[s].t; return [c.d, c.yaw + c.drift * dt, c.pitch, c.roll, c.ty]; }
+function camera(t, s) {
+  if (s === 0) return camOf(0, t);
+  const k = easeIO(clamp((t - SC[s].t) / (SC[s].dur * 1.3), 0, 1));
+  const a = camOf(s - 1, t), b = camOf(s, t);
+  return a.map((v, i) => mix(v, b[i], k));
+}
+
+/* ─────────────────────────  Captions & UI  ───────────────────────── */
+const $ = id => document.getElementById(id);
+const capEl = $('cap');
+let capTimer = 0;
+function spanify(el, text, base) {
+  el.textContent = '';
+  let i = 0;
+  for (const phrase of text.match(/[^、]+、?/g) || []) {
+    const ph = document.createElement('span');
+    ph.className = 'ph';
+    for (const ch of phrase) {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.textContent = ch === ' ' ? '\u00A0' : ch;
+      s.style.animationDelay = (base + i++ * 0.045) + 's';
+      ph.appendChild(s);
+    }
+    el.appendChild(ph);
+  }
+}
+function showCaption(s) {
+  clearTimeout(capTimer);
+  capEl.classList.add('out');
+  const S = SC[s];
+  if (!S.ja) return;
+  capTimer = setTimeout(() => {
+    $('capNo').textContent = String(Math.min(s, CHAPTERS - 1)).padStart(2, '0');
+    $('capLabel').textContent = S.label;
+    spanify($('capJa'), S.ja, 0);
+    const en = $('capEn'), da = $('capData');
+    en.textContent = S.en; da.textContent = S.data;
+    for (const el of [en, da]) { el.classList.remove('fade'); void el.offsetWidth; el.classList.add('fade'); }
+    en.style.animationDelay = '.5s'; da.style.animationDelay = '.8s';
+    capEl.classList.remove('out');
+  }, 450);
+}
+
+const segs = $('segs');
+const segEls = [];
+for (let i = 0; i < CHAPTERS; i++) {
+  const end = i === CHAPTERS - 1 ? LOOP : SC[i + 1].t;
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'seg';
+  b.style.setProperty('--w', (end - SC[i].t).toFixed(2));
+  b.setAttribute('aria-label', 'Chapter ' + String(i).padStart(2, '0') + ' ' + SC[i].label);
+  b.innerHTML = '<i></i><span>' + String(i).padStart(2, '0') + ' ' + SC[i].label + '</span>';
+  b.addEventListener('click', () => jump(i));
+  segs.appendChild(b); segEls.push(b);
+}
+$('pc').textContent = NSTR + ' particles';
+
+let T = 0, playing = true, lastScene = -1;
+const qT = parseFloat(new URLSearchParams(location.search).get('t'));
+if (qT >= 0 && qT < LOOP) T = qT;
+function jump(i) { T = SC[i].t + (i === 0 ? 0 : 0.001); prevT = T; }
+function togglePlay() { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; }
+$('play').addEventListener('click', togglePlay);
+addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  else if (e.code === 'ArrowRight') jump((Math.min(sceneAt(T), CHAPTERS - 1) + 1) % CHAPTERS);
+  else if (e.code === 'ArrowLeft') jump((Math.min(sceneAt(T), CHAPTERS - 1) + CHAPTERS - 1) % CHAPTERS);
+});
+
+const mouse = { x: 0, y: 0, z: 0, target: 0 };
+function pointer(e) {
+  const r = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX - r.left) / r.width * 2 - 1;
+  mouse.y = -((e.clientY - r.top) / r.height * 2 - 1);
+  mouse.target = 1; mouse.last = performance.now();
+}
+canvas.addEventListener('pointermove', pointer);
+canvas.addEventListener('pointerdown', pointer);
+canvas.addEventListener('pointerleave', () => { mouse.target = 0; });
+
+/* ─────────────────────────  Sound (synthesised)  ───────────────────────── */
+const CHORDS = [[38, 45, 50, 57, 62], [38, 50, 57, 62, 66], [34, 46, 53, 58, 62], [36, 48, 55, 60, 63],
+  [41, 48, 53, 57, 64], [43, 50, 55, 59, 62], [38, 50, 57, 62, 64], [38, 50, 57, 61, 66], [38, 45, 50, 57, 62]];
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+const AU = { ctx: null, on: false };
+function audioInit() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const master = ctx.createGain(); master.gain.value = 0;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
+  master.connect(comp); comp.connect(ctx.destination);
+  const conv = ctx.createConvolver();
+  const len = ctx.sampleRate * 3.2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+  conv.buffer = ir;
+  const wet = ctx.createGain(); wet.gain.value = 0.55; conv.connect(wet); wet.connect(master);
+  const bus = ctx.createGain(); bus.connect(master); bus.connect(conv);
+  const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  { const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 650; lp.Q.value = 0.8;
+  const lfo = ctx.createOscillator(), lfoG = ctx.createGain(); lfo.frequency.value = 0.06; lfoG.gain.value = 380;
+  lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start();
+  const padG = ctx.createGain(); padG.gain.value = 0.045; lp.connect(padG); padG.connect(bus);
+  const voices = [];
+  for (let v = 0; v < 5; v++) {
+    const pair = [-7, 7].map(det => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = det + (v - 2) * 1.5; o.connect(lp); o.start(); return o; });
+    voices.push(pair);
+  }
+  Object.assign(AU, { ctx, master, bus, nb, voices });
+}
+function setChord(s, when) {
+  const notes = CHORDS[s], t = AU.ctx.currentTime + (when || 0);
+  AU.voices.forEach((pair, k) => pair.forEach(o => o.frequency.setTargetAtTime(hz(notes[k % notes.length]), t, 0.5)));
+}
+function noiseSrc() { const n = AU.ctx.createBufferSource(); n.buffer = AU.nb; n.loop = true; return n; }
+function boom(str) {
+  const { ctx, master, bus } = AU, t = ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(34, t + 1.1);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9 * str, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + 2.3);
+  const n = noiseSrc(), f = ctx.createBiquadFilter(), ng = ctx.createGain();
+  f.type = 'lowpass'; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(200, t + 1.2);
+  ng.gain.setValueAtTime(0.45 * str, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+  n.connect(f); f.connect(ng); ng.connect(bus); n.start(t); n.stop(t + 1.5);
+}
+function whoosh(dur) {
+  const { ctx, bus } = AU, t = ctx.currentTime;
+  const n = noiseSrc(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  f.type = 'bandpass'; f.Q.value = 1.4;
+  f.frequency.setValueAtTime(220, t); f.frequency.exponentialRampToValueAtTime(2800, t + dur * 0.75); f.frequency.exponentialRampToValueAtTime(600, t + dur * 1.2);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 1.25);
+  n.connect(f); f.connect(g); g.connect(bus); n.start(t); n.stop(t + dur * 1.3);
+}
+function bell(m, delay) {
+  const { ctx, bus } = AU, t = ctx.currentTime + delay;
+  [[1, 0.07], [2.01, 0.03], [3.98, 0.012]].forEach(([mul, amp]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = hz(m) * mul;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.5);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + 3.6);
+  });
+}
+function thump(a) {
+  const { ctx, master } = AU, t = ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(75, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.25);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.6 * a, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.45);
+}
+function sceneSound(s, natural) {
+  if (!AU.on) return;
+  setChord(s);
+  const S = SC[s];
+  if (!natural) return;
+  if (s > 0) whoosh(S.dur);
+  if (S.flash) boom(S.flash);
+  if (s > 0 && s < CHAPTERS) bell(CHORDS[s][4] + 12, S.dur * 0.85);
+}
+$('snd').addEventListener('click', async () => {
+  const b = $('snd');
+  try {
+    if (!AU.ctx) audioInit();
+    AU.on = !AU.on;
+    const g = AU.master.gain, t = AU.ctx.currentTime;
+    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+    if (AU.on) { await AU.ctx.resume(); setChord(sceneAt(T)); g.linearRampToValueAtTime(0.85, t + 1.2); }
+    else g.linearRampToValueAtTime(0, t + 0.4);
+    b.textContent = AU.on ? 'Sound on' : 'Sound off';
+    b.setAttribute('aria-pressed', String(AU.on));
+  } catch (err) { b.textContent = 'No audio'; }
+});
+
+/* ─────────────────────────  Frame  ───────────────────────── */
+function bindTex(unit, t) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); }
+function drawTo(rt) { gl.bindFramebuffer(gl.FRAMEBUFFER, rt ? rt.fb : null); gl.viewport(0, 0, rt ? rt.w : canvas.width, rt ? rt.h : canvas.height); }
+function blur(src, dst, dx, dy) {
+  drawTo(dst);
+  gl.uniform2f(P_BLUR.u.uDir, dx / dst.w, dy / dst.h);
+  bindTex(0, src.t);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function heartbeat(t) {
+  const b = t % 1.1;
+  return Math.exp(-b * 9) * 0.5 + (b > 0.2 ? Math.exp(-(b - 0.2) * 9) * 0.35 : 0);
+}
+
+let last = performance.now(), prevT = T;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (playing) T += dt;
+  let wrapped = false;
+  if (T >= LOOP) { T -= LOOP; wrapped = true; }
+
+  const s = sceneAt(T), S = SC[s], P = s > 0 ? SC[s - 1] : SC[0];
+  if (s !== lastScene) {
+    const natural = playing && (lastScene === s - 1 || (wrapped && s === 0));
+    showCaption(s); sceneSound(s, natural);
+    segEls.forEach((el, i) => el.classList.toggle('on', i === Math.min(s, CHAPTERS - 1)));
+    lastScene = s;
+  }
+  // heartbeat sound in the opening
+  if (AU.on && playing && s === 0 && !wrapped) {
+    for (const off of [0, 0.2]) {
+      const k0 = Math.floor((prevT - off) / 1.1), k1 = Math.floor((T - off) / 1.1);
+      if (k1 > k0 && T - off >= 0) thump(off ? 0.6 : 1);
+    }
+  }
+  prevT = T;
+
+  const p = s === 0 ? 1 : clamp((T - S.t) / S.dur, 0, 1);
+  const dts = T - S.t;
+  const pk = smooth(p);
+  const tint = P.tint.map((v, i) => mix(v, S.tint[i], pk));
+
+  // opening: heartbeat, then anticipation squeeze before the bang
+  let gscale = 1, preFlash = 0;
+  if (s === 0 && T < SC[1].t) {
+    const antic = smooth(clamp((T - (SC[1].t - 0.7)) / 0.7, 0, 1));
+    gscale = (1 + heartbeat(T)) * (1 - 0.75 * antic);
+    preFlash = antic * 0.08;
+  }
+  const rm = REDUCED ? 0.3 : 1;
+  const flash = (S.flash ? S.flash * Math.exp(-dts * 5) * rm : 0) + preFlash;
+  const shock = S.flash ? dts : -1;
+  const shakeAmp = S.shake && !REDUCED ? S.shake * Math.exp(-dts * 2.2) * 0.14 : 0;
+
+  // camera
+  const aspect = canvas.width / canvas.height;
+  const fit = clamp(1.95 / (5 * Math.tan(Math.PI / 8) * aspect), 1, 2.3);
+  let [cd, yaw, pitch, roll, ty] = camera(T, s);
+  yaw += 0.025 * Math.sin(now * 0.0003); pitch += 0.018 * Math.sin(now * 0.00023);
+  cd *= fit;
+  const sh = [Math.sin(now * 0.061) * shakeAmp, Math.sin(now * 0.047 + 1.3) * shakeAmp, Math.sin(now * 0.053 + 2.1) * shakeAmp];
+  const tgt = [sh[0], ty + sh[1], sh[2]];
+  const eye = [tgt[0] + cd * Math.cos(pitch) * Math.sin(yaw), tgt[1] + cd * Math.sin(pitch), tgt[2] + cd * Math.cos(pitch) * Math.cos(yaw)];
+  const proj = perspective(Math.PI / 4, aspect, 0.05, 100);
+  proj[9] = aspect > 1 ? -0.12 : -0.16; // lens shift: lift the subject clear of the caption
+  const view = lookAt(eye, tgt, roll + sh[0] * 0.3);
+
+  // mouse
+  if (mouse.last && now - mouse.last > 1600) mouse.target = 0;
+  mouse.z += (mouse.target - mouse.z) * Math.min(1, dt * 4);
+
+  const pxScale = canvas.height / 1000;
+
+  // 1 · background
+  drawTo(RT.scene);
+  gl.disable(gl.BLEND);
+  gl.useProgram(P_BG.p);
+  gl.uniform3fv(P_BG.u.uTint, tint);
+  gl.uniform1f(P_BG.u.uTime, now / 1000);
+  gl.uniform2f(P_BG.u.uRes, RT.scene.w, RT.scene.h);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  // 2 · dust + particles, additive
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  gl.useProgram(P_DUST.p);
+  gl.uniformMatrix4fv(P_DUST.u.uProj, false, proj);
+  gl.uniformMatrix4fv(P_DUST.u.uView, false, view);
+  gl.uniform1f(P_DUST.u.uTime, now / 1000);
+  gl.uniform1f(P_DUST.u.uPx, pxScale);
+  gl.uniform3fv(P_DUST.u.uTint, tint);
+  gl.drawArrays(gl.POINTS, 0, 1800);
+
+  const U = P_PART.u;
+  gl.useProgram(P_PART.p);
+  bindTex(0, TEX_POS); gl.uniform1i(U.uPos, 0);
+  bindTex(1, TEX_COL); gl.uniform1i(U.uCol, 1);
+  gl.uniform1i(U.uFrom, s === 0 ? 0 : P.shape);
+  gl.uniform1i(U.uTo, S.shape);
+  gl.uniform1i(U.uTW, TW); gl.uniform1i(U.uTH, TH);
+  gl.uniform1f(U.uP, p);
+  gl.uniform1f(U.uStag, S.stag);
+  gl.uniform1f(U.uTurb, S.turb * (REDUCED ? 0.5 : 1));
+  gl.uniform1f(U.uSwirl, S.swirl * (REDUCED ? 0.5 : 1));
+  gl.uniform1f(U.uTime, T);
+  gl.uniform1f(U.uPx, pxScale);
+  gl.uniform1f(U.uScale, gscale);
+  gl.uniform1f(U.uEase, S.ease || 0);
+  gl.uniform1f(U.uIntensity, 0.5 * (131072 / N));
+  gl.uniform1f(U.uAspect, aspect);
+  gl.uniform3f(U.uMouse, mouse.x, mouse.y, mouse.z);
+  gl.uniformMatrix4fv(U.uProj, false, proj);
+  gl.uniformMatrix4fv(U.uView, false, view);
+  gl.drawArrays(gl.POINTS, 0, N);
+  gl.disable(gl.BLEND);
+
+  // 3 · bloom + anamorphic streak
+  gl.useProgram(P_BRIGHT.p);
+  drawTo(RT.half);
+  bindTex(0, RT.scene.t); gl.uniform1i(P_BRIGHT.u.uSrc, 0);
+  gl.uniform2f(P_BRIGHT.u.uTexel, 1 / RT.scene.w, 1 / RT.scene.h);
+  gl.uniform1f(P_BRIGHT.u.uThr, 0.32);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  gl.useProgram(P_BLUR.p);
+  gl.uniform1i(P_BLUR.u.uSrc, 0);
+  blur(RT.half, RT.a1, 1, 0); blur(RT.a1, RT.b1, 0, 1);
+  blur(RT.b1, RT.a2, 1, 0); blur(RT.a2, RT.b2, 0, 1);
+  blur(RT.b2, RT.a3, 1, 0); blur(RT.a3, RT.b3, 0, 1);
+  blur(RT.b3, RT.a3, 2, 0); blur(RT.a3, RT.b3, 0, 2);
+  blur(RT.b2, RT.sa, 1.5, 0); blur(RT.sa, RT.sb, 3, 0); blur(RT.sb, RT.sa, 6, 0); blur(RT.sa, RT.sb, 12, 0);
+
+  // 4 · composite
+  gl.useProgram(P_COMP.p);
+  drawTo(null);
+  const C = P_COMP.u;
+  bindTex(0, RT.scene.t); gl.uniform1i(C.uScene, 0);
+  bindTex(1, RT.b1.t); gl.uniform1i(C.uB1, 1);
+  bindTex(2, RT.b2.t); gl.uniform1i(C.uB2, 2);
+  bindTex(3, RT.b3.t); gl.uniform1i(C.uB3, 3);
+  bindTex(4, RT.sb.t); gl.uniform1i(C.uS, 4);
+  gl.uniform1f(C.uBloom, 0.95);
+  gl.uniform1f(C.uStreak, 0.55);
+  gl.uniform1f(C.uFlash, flash);
+  gl.uniform1f(C.uTime, now / 1000);
+  gl.uniform1f(C.uExposure, 1.35);
+  gl.uniform1f(C.uShock, REDUCED ? -1 : shock);
+  gl.uniform2f(C.uRes, canvas.width, canvas.height);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.activeTexture(gl.TEXTURE0);
+
+  // HUD
+  const fr = Math.floor((T % 1) * 24);
+  $('tc').textContent = String(Math.floor(T / 60)).padStart(2, '0') + ':' + String(Math.floor(T % 60)).padStart(2, '0') + ':' + String(fr).padStart(2, '0');
+  segEls.forEach((el, i) => {
+    const a = SC[i].t, b = i === CHAPTERS - 1 ? LOOP : SC[i + 1].t;
+    el.style.setProperty('--p', (clamp((T - a) / (b - a), 0, 1) * 100).toFixed(1) + '%');
+  });
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
